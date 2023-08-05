@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"log"
 
@@ -66,12 +67,28 @@ func sendMessageCallback(ctx context.Context, b *bot.Bot, update *models.Update,
 func editMessageCallback(ctx context.Context, b *bot.Bot, update *models.Update, checker string) {
 	var saving string
 	var gleb string
+	var DarkGPT string
 
+	if checker == "setGleb" {
+		if checkDarkGPT(int(update.CallbackQuery.Sender.ID)) {
+			setDarkGPTMode(int(update.CallbackQuery.Sender.ID))
+		}
+		setGlebMode(int(update.CallbackQuery.Sender.ID))
+	}
+	if checker == "setDarkGPT" {
+		if checkGleb(int(update.CallbackQuery.Sender.ID)) {
+			setGlebMode(int(update.CallbackQuery.Sender.ID))
+		}
+		setDarkGPTMode(int(update.CallbackQuery.Sender.ID))
+	}
 	if checker == "saving_Messages" {
 		setSaveMessages(int(update.CallbackQuery.Sender.ID))
-	}
-	if checker == "setGleb" {
-		setGlebMode(int(update.CallbackQuery.Sender.ID))
+		if checkDarkGPT(int(update.CallbackQuery.Sender.ID)) {
+			updateDarkGPT(int(update.CallbackQuery.Sender.ID))
+		}
+		if checkGleb(int(update.CallbackQuery.Sender.ID)) {
+			updateGleb(int(update.CallbackQuery.Sender.ID))
+		}
 	}
 
 	if checkSavingMessages(int(update.CallbackQuery.Sender.ID)) {
@@ -86,12 +103,20 @@ func editMessageCallback(ctx context.Context, b *bot.Bot, update *models.Update,
 		gleb = "❌ Режим Глеба"
 	}
 
+	if checkDarkGPT(int(update.CallbackQuery.Sender.ID)) {
+		DarkGPT = "✅ Режим DarkGPT"
+	} else {
+		DarkGPT = "❌ Режим DarkGPT"
+	}
+
 	kb := &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{
 				{Text: saving, CallbackData: "saving_Messages"},
 			}, {
 				{Text: gleb, CallbackData: "usingGleb"},
+			}, {
+				{Text: DarkGPT, CallbackData: "darkgptmode"},
 			},
 		},
 	}
@@ -104,4 +129,14 @@ func editMessageCallback(ctx context.Context, b *bot.Bot, update *models.Update,
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func sendImageByte(ctx context.Context, b *bot.Bot, update *models.Update, bytess []byte, prompt string) error {
+	_, err := b.SendPhoto(ctx, &bot.SendPhotoParams{
+		ChatID:           update.Message.Chat.ID,
+		Caption:          prompt,
+		ReplyToMessageID: update.Message.ID,
+		Photo:            &models.InputFileUpload{Filename: "facebook.png", Data: bytes.NewReader(bytess)},
+	})
+	return err
 }

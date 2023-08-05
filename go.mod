@@ -9,7 +9,6 @@ require (
 )
 
 require (
-	github.com/mazen160/go-random v0.0.0-20210308102632-d2b501c85c03
 	github.com/sashabaranov/go-openai v1.5.7
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 )
